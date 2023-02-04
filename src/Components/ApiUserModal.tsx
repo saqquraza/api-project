@@ -1,8 +1,9 @@
-import { Col, Form, Input, Modal, Row } from 'antd'
+import { Col, Form, Input, message, Modal, Row } from 'antd'
 import { useForm } from 'antd/es/form/Form';
 import TextArea from 'antd/es/input/TextArea';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
+import { apiTypes } from '../Service/apiTypes';
 
 interface Props {
     onClose: () => void;
@@ -38,30 +39,73 @@ const fetchUserDetailsById = async () => {
   };
 
   useEffect(() => {
-    if (id && id !== '0') {
+    if (id ) {
       fetchUserDetailsById();
     }
   }, [id]);
 
-  console.log(userDetails);
 
-//   useEffect(() => {
-//     if (isEditMode ) {
-//       form.setFieldValue("dateAndTime", moment(clientNotesDetails?.dateAndTime));
-//       form.setFieldValue("clientDescription", clientNotesDetails?.clientDescription);
-//     }
-//   }, [ isEditMode]);
+  useEffect(() => {
+    if (userDetails ) {
+      form.setFieldValue("firstName", userDetails?.firstName);
+      form.setFieldValue("lastName", userDetails?.lastName);
+      form.setFieldValue("age", userDetails?.age);
+      form.setFieldValue("phoneNumber", userDetails?.phoneNumber);
+    }
+  }, [ userDetails]);
+
+  const handleEditUserDetail = async (value:apiTypes) => {
+    if (id) {
+      try {
+        const resp = await axios.patch(`https://blue-journalist-bbrpv.ineuron.app:4000/user/${id}`,value);
+        await fetchData();
+        form.resetFields();
+        onClose();
+      } catch (err: any) {
+        console.error(err);
+        message.error(err?.response?.data?.message || "Something went wrong!");
+      } 
+    }
+  };
+  
+  const handleSubmit = async (value: apiTypes) => {
+     {
+      
+      try {
+        const resp = await axios.post(`https://blue-journalist-bbrpv.ineuron.app:4000/user/create`,value);
+        const res = await fetchData();
+        form.resetFields();
+        onClose();
+        message.success(
+          resp?.data?.message || "Added Client Notes successfully"
+        );
+      } catch (error: any) {
+        message.error(error.response?.data?.message || "Something went wrong!");
+       
+      } 
+    }
+  };
+  const resetStates = () => {
+    setUserDetails({} as any)
+      form.resetFields();
+    }
 
     return (
             <Modal
                 title="User Info"
                 open={open}
-                onCancel={()=>onClose()}
+                onCancel={()=>{
+                    onClose();
+                    resetStates()
+                }}
+                onOk={() => form.submit()}
+                okText={'Save'}
+                cancelText={'Cancel'}
             >
                 <Form
                     layout="vertical"
-                //   onFinish={isEditMode && id ? handleEditClienGoals : handleSubmit}
-                //   form={form}
+                 onFinish={isEditMode && id ? handleEditUserDetail : handleSubmit}
+                   form={form}
                 >
                     <Row gutter={[20, 0]}>
                         <Col xs={24} >

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ColumnsType } from 'antd/es/table';
-import { Space } from 'antd';
+import { Modal, Space } from 'antd';
 import CommonTable from '../Common/CommonTable';
 import { DeleteOutlined } from '@ant-design/icons';
 import ApiUserModal from './ApiUserModal';
+import CommonEditAndUpdate from '../Common/CommonEditAndUpdate';
+import "./ApiUser.css"
 
 interface DataTypes{
     key:string;
@@ -42,7 +44,22 @@ const ApiUser = () => {
     fetchData();
   }, []);
 
-console.log(dataApi)
+  const onDelete = (id: string) => {
+        Modal.confirm({
+          title: "Delete User detail",
+          icon: "",
+          content: "Are you sure you want to delete? You can’t undo this action.",
+          cancelText: "Cancel",
+          okText: "Delete",
+          centered: true,
+          onOk: async () => {
+            await axios.delete(`https://blue-journalist-bbrpv.ineuron.app:4000/user/${id}`)
+          await fetchData();
+          },
+        });
+      };
+
+
 
 const columns: ColumnsType<DataTypes> = [
     {
@@ -96,7 +113,6 @@ const columns: ColumnsType<DataTypes> = [
                 }}
                 onClick={() =>{
                   setIsEditModalOpen({ isOpen: true, id: viewDetails })
-                  console.log(viewDetails)
                 }}
               >
                 View Details
@@ -105,20 +121,22 @@ const columns: ColumnsType<DataTypes> = [
           </>
         ),
       },
-    //   {
-    //     title: " ",
-    //     key: "delete",
-    //     render: (_, { viewDetails }) => (
-    //           <>
-    //             <Space
-    //               size="middle"
-    //               style={{ cursor: "pointer", color: "#D62828" }}
-    //             >
-    //               {/* <DeleteOutlined onClick={() => onDelete(viewDetails)} /> */}
-    //             </Space>
-    //           </>
-    //     ),
-    //   },
+      {
+        title: " ",
+        key: "delete",
+        render: (_, { viewDetails }) => (
+              <>
+                <Space
+                  size="middle"
+                  style={{ cursor: "pointer", color: "#D62828" }}
+                >
+                  <DeleteOutlined onClick={() =>{
+                     onDelete(viewDetails)
+                     }} />
+                </Space>
+              </>
+        ),
+      },
 
 ]
 
@@ -140,23 +158,27 @@ const data:DataTypes[]=dataApi.map((data:any)=>{
 
   return (
     <>
+     <Space  direction='vertical' className='api-user-detail'>
+          <CommonEditAndUpdate
+            buttonTitle="Add New User"
+            onAddNewForm={() => setIsModalOpen(true)}
+            subTitle={""} />
     <CommonTable columns={columns} data={data} />
     <ApiUserModal
     open={isAddModalOpen}
     onClose={()=>setIsModalOpen(false)}
     modalTitle="Add new user"
     fetchData={fetchData}
-
     />
     <ApiUserModal
-    open={isAddModalOpen}
+    open={isEditModalOpen.isOpen}
     onClose={() => setIsEditModalOpen({ isOpen: false, id: "0" })}
     modalTitle="Add new user"
     isEditMode={true}
     id={isEditModalOpen.id}
     fetchData={fetchData}
-
-    />
+ />
+     </Space>
     </>
   );
 };
